@@ -1,0 +1,133 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+  .grid-mask {
+    background-image: radial-gradient(circle at 1px 1px, rgba(15, 23, 42, 0.08) 1px, transparent 0);
+    background-size: 40px 40px;
+    mask-image: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0));
+  }
+  .glass-panel {
+    @apply rounded-[26px] border border-white/50 bg-white/80 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur-2xl;
+  }
+}
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 217 47% 97%;
+    --foreground: 226 33% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 226 33% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 226 33% 12%;
+
+    --primary: 255 78% 62%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 214 89% 96%;
+    --secondary-foreground: 222 45% 25%;
+
+    --muted: 216 33% 92%;
+    --muted-foreground: 220 15% 45%;
+
+    --accent: 160 65% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    --warning: 35 95% 55%;
+    --warning-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 32% 92%;
+    --input: 220 32% 92%;
+    --ring: 255 78% 62%;
+
+    --radius: 1.75rem;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 227 23% 20%;
+    --sidebar-primary: 255 78% 62%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 255 78% 62%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 216 33% 88%;
+    --sidebar-ring: 255 78% 62%;
+  }
+
+  .dark {
+    --background: 222 33% 8%;
+    --foreground: 220 27% 95%;
+
+    --card: 222 33% 12%;
+    --card-foreground: 220 27% 95%;
+
+    --popover: 222 33% 12%;
+    --popover-foreground: 220 27% 95%;
+
+    --primary: 255 80% 70%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 25% 20%;
+    --secondary-foreground: 220 27% 95%;
+
+    --muted: 220 25% 20%;
+    --muted-foreground: 218 13% 65%;
+
+    --accent: 160 65% 48%;
+    --accent-foreground: 0 0% 100%;
+
+    --warning: 38 95% 60%;
+    --warning-foreground: 0 0% 100%;
+
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 25% 20%;
+    --input: 220 25% 20%;
+    --ring: 255 80% 70%;
+
+    --sidebar-background: 226 32% 10%;
+    --sidebar-foreground: 220 25% 90%;
+    --sidebar-primary: 255 80% 70%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 255 80% 70%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 25% 22%;
+    --sidebar-ring: 255 80% 70%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background-image:
+      radial-gradient(circle at top, rgba(99, 102, 241, 0.25), transparent 45%),
+      radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.25), transparent 35%),
+      radial-gradient(circle at 80% 0%, rgba(248, 113, 113, 0.2), transparent 40%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(226, 232, 240, 0.6));
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  }
+}
