@@ -2,7 +2,15 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { StatCard } from "@/components/StatCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TranslatedText } from "@/components/TranslatedText";
-import { BookOpen, Building2, Siren, Users, AlertTriangle, CheckCircle2, Clock, ArrowUpRight, Shield, Activity, TrendingUp, Zap, Target, Award, Calendar, MapPin, Flame, Droplets, AlertCircle as AlertCircleIcon } from "lucide-react";
+import { BookOpen, Building2, Siren, Users, AlertTriangle, CheckCircle2, Clock, ArrowUpRight, Shield, Activity, TrendingUp, Zap, Target, Award, Calendar, MapPin, Flame, Droplets, AlertCircle as AlertCircleIcon, Globe2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getAlerts } from "../services/alertService";
+import { getModules } from "../services/moduleService";
+import { getFacilities } from "../services/facilityService";
+import { getDrills } from "../services/drillService";
+import { getAssessments } from "../services/assessmentService";
+import { getLatestNews, NewsArticle } from "../services/newsService";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
@@ -57,6 +65,78 @@ const drillTimeline = [
 ];
 
 const Dashboard = () => {
+  // Real-time data fetching with polling
+  const { data: alerts = [], isLoading: alertsLoading } = useQuery({
+    queryKey: ["alerts"],
+    queryFn: getAlerts,
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  const { data: modules = [], isLoading: modulesLoading } = useQuery({
+    queryKey: ["modules"],
+    queryFn: getModules,
+    refetchInterval: 60000, // Refresh every minute
+  });
+
+  const { data: facilities = [], isLoading: facilitiesLoading } = useQuery({
+    queryKey: ["facilities"],
+    queryFn: getFacilities,
+    refetchInterval: 60000,
+  });
+
+  const { data: drills = [], isLoading: drillsLoading } = useQuery({
+    queryKey: ["drills"],
+    queryFn: getDrills,
+    refetchInterval: 60000,
+  });
+
+  const { data: assessments = [], isLoading: assessmentsLoading } = useQuery({
+    queryKey: ["assessments"],
+    queryFn: getAssessments,
+    refetchInterval: 60000,
+  });
+
+  const {
+    data: newsArticles = [],
+    isLoading: newsLoading,
+    isError: newsError,
+  } = useQuery<NewsArticle[]>({
+    queryKey: ["latest-news"],
+    queryFn: getLatestNews,
+    staleTime: 1000 * 60 * 5,
+    refetchInterval: 1000 * 60 * 5, // Refresh every 5 minutes
+  });
+
+  const isLoading = alertsLoading || modulesLoading || facilitiesLoading || drillsLoading || assessmentsLoading;
+
+  // Calculate real stats from backend data
+  const activeModules = modules.length;
+  const registeredFacilities = facilities.length;
+  const upcomingDrills = drills.filter(d => d.status === 'scheduled' && new Date(d.scheduledDate) > new Date()).length;
+  const activeUsers = modules.reduce((sum, m) => sum + (m.enrolledUsers?.length || 0), 0);
+
+  // Get upcoming drills for timeline
+  const upcomingDrillsList = drills
+    .filter(d => d.status === 'scheduled' && new Date(d.scheduledDate) > new Date())
+    .sort((a, b) => new Date(a.scheduledDate) - new Date(b.scheduledDate))
+    .slice(0, 3)
+    .map(drill => ({
+      title: drill.title,
+      facility: typeof drill.facility === 'object' ? drill.facility.name : 'Unknown',
+      date: new Date(drill.scheduledDate).toLocaleDateString() + " " + new Date(drill.scheduledDate).toLocaleTimeString(),
+      status: drill.status,
+      type: drill.type,
+      participants: drill.participants?.length || 0,
+      icon: drill.type === 'fire' ? Flame : drill.type === 'flood' ? Droplets : AlertCircleIcon
+    }));
+
+  // Module performance data
+  const modulePerformance = modules.slice(0, 4).map(m => ({
+    name: m.title,
+    value: m.enrolledUsers?.length || 0,
+    color: "hsl(var(--primary))"
+  }));
+
   return (
     <DashboardLayout
       title={{
@@ -203,37 +283,41 @@ const Dashboard = () => {
         </motion.section>
 
         {/* Stats Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"
-        >
+        {isLoading ? (
+          <LoadingSpinner text="Loading dashboard data..." />
+        ) : (
           <motion.div
-            whileHover={{ y: -4 }}
-            transition={{ type: "spring", stiffness: 300 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"
           >
-            <StatCard title="Active Modules" value="24" icon={BookOpen} trend="+3 this month" variant="primary" />
+            <motion.div
+              whileHover={{ y: -4 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <StatCard title="Active Modules" value={activeModules.toString()} icon={BookOpen} trend={`${modules.filter(m => m.isActive).length} active`} variant="primary" />
+            </motion.div>
+            <motion.div
+              whileHover={{ y: -4 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <StatCard title="Registered Facilities" value={registeredFacilities.toString()} icon={Building2} trend={`${facilities.filter(f => f.isActive).length} active`} variant="accent" />
+            </motion.div>
+            <motion.div
+              whileHover={{ y: -4 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <StatCard title="Upcoming Drills" value={upcomingDrills.toString()} icon={Siren} trend={upcomingDrills > 0 ? "Scheduled" : "None scheduled"} variant="warning" />
+            </motion.div>
+            <motion.div
+              whileHover={{ y: -4 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <StatCard title="Active Users" value={activeUsers.toString()} icon={Users} trend={`${alerts.length} alerts`} variant="default" />
+            </motion.div>
           </motion.div>
-          <motion.div
-            whileHover={{ y: -4 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <StatCard title="Registered Facilities" value="12" icon={Building2} trend="All compliant" variant="accent" />
-          </motion.div>
-          <motion.div
-            whileHover={{ y: -4 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <StatCard title="Upcoming Drills" value="5" icon={Siren} trend="Next: Tomorrow" variant="warning" />
-          </motion.div>
-          <motion.div
-            whileHover={{ y: -4 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <StatCard title="Active Users" value="156" icon={Users} trend="+12 this week" variant="default" />
-          </motion.div>
-        </motion.div>
+        )}
 
         {/* Timeline and Activity */}
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.5fr,1fr]">
@@ -256,16 +340,23 @@ const Dashboard = () => {
                 </Button>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
-                {drillTimeline.map((item, index) => (
-                  <motion.div
-                    key={item.title}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 + index * 0.1 }}
-                  >
-                    <DrillItem {...item} />
-                  </motion.div>
-                ))}
+                {upcomingDrillsList.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">No upcoming drills scheduled</p>
+                ) : (
+                  upcomingDrillsList.map((item, index) => {
+                    const IconComponent = item.icon || Siren;
+                    return (
+                      <motion.div
+                        key={`${item.title}-${index}`}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.4 + index * 0.1 }}
+                      >
+                        <DrillItem {...item} icon={IconComponent} />
+                      </motion.div>
+                    );
+                  })
+                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -319,11 +410,26 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <ModuleCard title="Earthquake Safety" progress={75} users={42} type="earthquake" />
-                <ModuleCard title="Fire Safety Basics" progress={60} users={38} type="fire" />
-                <ModuleCard title="Flood Response" progress={45} users={28} type="flood" />
-              </div>
+              {modules.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No modules available</p>
+              ) : (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  {modules.slice(0, 3).map((module) => {
+                    const enrolled = module.enrolledUsers?.length || 0;
+                    const completed = module.completedUsers?.length || 0;
+                    const progress = enrolled > 0 ? Math.round((completed / enrolled) * 100) : 0;
+                    return (
+                      <ModuleCard
+                        key={module._id}
+                        title={module.title}
+                        progress={progress}
+                        users={enrolled}
+                        type={module.category || module.type}
+                      />
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
@@ -346,8 +452,11 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent className="p-6">
               <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={modulePerformance}>
+                {modulePerformance.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">No module data available</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={modulePerformance}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsla(var(--foreground),0.1)" vertical={false} />
                     <XAxis
                       dataKey="name"
@@ -378,7 +487,47 @@ const Dashboard = () => {
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
+                )}
               </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Situation Awareness */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+        >
+          <Card className="glass-panel border-white/60 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-primary/10 p-2">
+                  <Globe2 className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Global Situation Feed</CardTitle>
+                  <CardDescription>Live disaster & safety headlines refreshed every few minutes</CardDescription>
+                </div>
+              </div>
+              <Badge variant="outline" className="rounded-full border-dashed">
+                Auto-refresh · 5 min
+              </Badge>
+            </CardHeader>
+            <CardContent className="p-6">
+              {newsLoading ? (
+                <LoadingSpinner size="md" text="Fetching latest situational intelligence..." />
+              ) : newsError ? (
+                <p className="text-sm text-destructive">Unable to load news feed right now.</p>
+              ) : newsArticles.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No recent headlines available.</p>
+              ) : (
+                <div className="space-y-4">
+                  {newsArticles.map((article, idx) => (
+                    <NewsItem key={`${article.title}-${idx}`} article={article} />
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
@@ -550,6 +699,46 @@ const ModuleCard = ({
         </div>
       </div>
     </motion.div>
+  );
+};
+
+const NewsItem = ({ article }: { article: NewsArticle }) => {
+  const publishedTime = article.publishedAt
+    ? new Intl.DateTimeFormat(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(new Date(article.publishedAt))
+    : "Just now";
+
+  return (
+    <motion.a
+      href={article.url || "#"}
+      target={article.url ? "_blank" : "_self"}
+      rel="noreferrer"
+      whileHover={{ x: 4 }}
+      className="group block rounded-2xl border border-white/60 bg-white/70 p-4 transition-all hover:border-primary/40 hover:bg-white/90 dark:bg-slate-900/60 dark:hover:bg-slate-900/80"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold text-foreground">{article.title}</p>
+          {article.description && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              {article.description}
+            </p>
+          )}
+        </div>
+        <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+        {article.source && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium">
+            <Globe2 className="h-3 w-3" />
+            {article.source}
+          </span>
+        )}
+        <span>{publishedTime}</span>
+      </div>
+    </motion.a>
   );
 };
 

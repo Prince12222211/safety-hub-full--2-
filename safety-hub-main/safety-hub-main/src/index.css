@@ -21,8 +21,15 @@
     background-size: 40px 40px;
     mask-image: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0));
   }
+  .dark .grid-mask {
+    background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.08) 1px, transparent 0);
+    mask-image: linear-gradient(180deg, rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0));
+  }
   .glass-panel {
     @apply rounded-[26px] border border-white/40 bg-white/70 shadow-[0_25px_60px_rgba(15,23,42,0.08)] backdrop-blur-2xl;
+  }
+  .dark .glass-panel {
+    @apply border-white/10 bg-slate-900/50 shadow-[0_25px_60px_rgba(0,0,0,0.35)];
   }
   .font-display {
     font-family: var(--font-display);
@@ -133,5 +140,13 @@
       linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(226, 232, 240, 0.75));
     background-attachment: fixed;
     min-height: 100vh;
+  }
+
+  .dark body {
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.1), transparent 45%),
+      radial-gradient(circle at 80% 0%, rgba(248, 113, 113, 0.08), transparent 45%),
+      radial-gradient(circle at 0% 50%, rgba(110, 231, 183, 0.08), transparent 45%),
+      linear-gradient(180deg, rgba(2, 6, 23, 0.95), rgba(15, 23, 42, 0.85));
   }
 }

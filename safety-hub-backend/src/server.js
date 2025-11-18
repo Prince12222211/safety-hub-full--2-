@@ -5,7 +5,14 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import alertRoutes from "./routes/alertRoutes.js";
+import facilityRoutes from "./routes/facilityRoutes.js";
+import drillRoutes from "./routes/drillRoutes.js";
+import moduleRoutes from "./routes/moduleRoutes.js";
+import assessmentRoutes from "./routes/assessmentRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { ensureDemoUser } from "./utils/seedDemoUser.js";
+import newsRoutes from "./routes/newsRoutes.js";
 
 dotenv.config();
 
@@ -23,11 +30,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Connect to database
-connectDB();
+connectDB().then(ensureDemoUser);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/alerts", alertRoutes);
+app.use("/api/facilities", facilityRoutes);
+app.use("/api/drills", drillRoutes);
+app.use("/api/modules", moduleRoutes);
+app.use("/api/assessments", assessmentRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/news", newsRoutes);
 
 app.get("/", (req, res) => res.send("Safety Hub API is running"));
 app.use(errorHandler);

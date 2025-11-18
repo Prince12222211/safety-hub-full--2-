@@ -1,18 +1,34 @@
-import { useState, useContext } from "react";
-import { loginUser } from "../services/authService";
-import { AuthContext } from "../contexts/AuthContext";
+import { useContext, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { AlertCircle, Loader2, Eye, EyeOff, Shield, Sparkles, Lock, ArrowRight } from "lucide-react";
+import { registerUser } from "../services/authService";
+import { AuthContext } from "../contexts/AuthContext";
 import { motion } from "framer-motion";
+import {
+  AlertCircle,
+  Loader2,
+  Eye,
+  EyeOff,
+  Shield,
+  Sparkles,
+  User,
+  Lock,
+  ArrowRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+const initialState = {
+  name: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+};
+
+export default function Register() {
+  const [formData, setFormData] = useState(initialState);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -20,19 +36,33 @@ export default function Login() {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
-    if (!email) {
+    if (!formData.name.trim()) {
+      newErrors.name = "Full name is required";
+    }
+
+    if (!formData.email) {
       newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Please enter a valid email";
     }
 
-    if (!password) {
+    if (!formData.password) {
       newErrors.password = "Password is required";
-    } else if (password.length < 6) {
+    } else if (formData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     setErrors(newErrors);
@@ -47,13 +77,15 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const { token, user } = await loginUser({ email, password });
+      const { token, user } = await registerUser({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
       login(token, user);
       navigate("/dashboard");
     } catch (err) {
-      setError(
-        err.response?.data?.msg || "Invalid credentials. Please try again."
-      );
+      setError(err.response?.data?.msg || "Unable to register. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -61,7 +93,6 @@ export default function Login() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-background flex items-center justify-center p-4">
-      {/* Animated Background Elements */}
       <div className="pointer-events-none absolute inset-0">
         <div className="grid-mask absolute inset-0 opacity-40" />
         <motion.div
@@ -81,13 +112,8 @@ export default function Login() {
       </div>
 
       <div className="relative w-full max-w-md z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <Card className="glass-panel border-white/60 shadow-[0_30px_80px_rgba(15,23,42,0.12)] overflow-hidden">
-            {/* Header Section */}
             <div className="relative bg-gradient-to-br from-primary via-primary/90 to-primary/80 px-8 py-12 text-white overflow-hidden">
               <div className="absolute inset-0 bg-grid-white/10 opacity-20" />
               <motion.div
@@ -100,33 +126,23 @@ export default function Login() {
                   <Shield className="h-8 w-8" />
                 </div>
                 <div className="text-center">
-                  <h1 className="font-display text-3xl font-bold">Safety Hub</h1>
+                  <h1 className="font-display text-3xl font-bold">Create Account</h1>
                   <p className="mt-2 text-sm text-white/90 flex items-center justify-center gap-2">
                     <Sparkles className="h-3.5 w-3.5" />
-                    Disaster Management & Safety Training
+                    Join Safety Hub Command Center
                   </p>
                 </div>
               </motion.div>
             </div>
 
-            {/* Form Section */}
             <CardContent className="p-8">
               <div className="space-y-2 mb-6">
-                <h2 className="font-display text-2xl font-semibold text-foreground">
-                  Welcome Back
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Sign in to your account to continue
-                </p>
+                <h2 className="font-display text-2xl font-semibold text-foreground">Welcome</h2>
+                <p className="text-sm text-muted-foreground">Enter your details to get started</p>
               </div>
 
-              {/* Error Alert */}
               {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-6"
-                >
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>{error}</AlertDescription>
@@ -135,20 +151,41 @@ export default function Login() {
               )}
 
               <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Email Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-sm font-medium">
+                    Full Name
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="name"
+                      name="name"
+                      type="text"
+                      placeholder="Alex Verma"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className={errors.name ? "border-destructive focus-visible:ring-destructive" : ""}
+                    />
+                    <User className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
+                  {errors.name && (
+                    <p className="text-sm text-destructive flex items-center gap-1.5">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      {errors.name}
+                    </p>
+                  )}
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium">
                     Email Address
                   </Label>
                   <Input
                     id="email"
+                    name="email"
                     type="email"
                     placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (errors.email) setErrors({ ...errors, email: "" });
-                    }}
+                    value={formData.email}
+                    onChange={handleChange}
                     className={errors.email ? "border-destructive focus-visible:ring-destructive" : ""}
                   />
                   {errors.email && (
@@ -159,7 +196,6 @@ export default function Login() {
                   )}
                 </div>
 
-                {/* Password Field */}
                 <div className="space-y-2">
                   <Label htmlFor="password" className="text-sm font-medium">
                     Password
@@ -167,13 +203,11 @@ export default function Login() {
                   <div className="relative">
                     <Input
                       id="password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        if (errors.password) setErrors({ ...errors, password: "" });
-                      }}
+                      value={formData.password}
+                      onChange={handleChange}
                       className={errors.password ? "border-destructive focus-visible:ring-destructive pr-10" : "pr-10"}
                     />
                     <button
@@ -181,11 +215,7 @@ export default function Login() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                   {errors.password && (
@@ -196,85 +226,53 @@ export default function Login() {
                   )}
                 </div>
 
-                {/* Remember Me */}
-                <div className="flex items-center space-x-2">
-                  <input
-                    id="remember"
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
-                  />
-                  <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
-                    Remember me
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                    Confirm Password
                   </Label>
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    placeholder="••••••••"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className={errors.confirmPassword ? "border-destructive focus-visible:ring-destructive" : ""}
+                  />
+                  {errors.confirmPassword && (
+                    <p className="text-sm text-destructive flex items-center gap-1.5">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      {errors.confirmPassword}
+                    </p>
+                  )}
                 </div>
 
-                {/* Login Button */}
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full gap-2 rounded-2xl"
-                  size="lg"
-                >
+                <Button type="submit" disabled={loading} className="w-full gap-2 rounded-2xl" size="lg">
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Signing in...
+                      Creating account...
                     </>
                   ) : (
                     <>
-                      Sign In
+                      Create account
                       <ArrowRight className="h-4 w-4" />
                     </>
                   )}
                 </Button>
-
-                {/* Divider */}
-                <div className="relative my-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-border" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground">or continue as</span>
-                  </div>
-                </div>
-
-                {/* Demo Credentials */}
-                <Card className="border-dashed border-primary/40 bg-primary/5">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="rounded-lg bg-primary/10 p-2">
-                        <Lock className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <p className="text-xs font-semibold text-foreground">
-                          Demo Credentials
-                        </p>
-                        <div className="space-y-1 text-xs text-muted-foreground">
-                          <p>
-                            Email: <span className="font-mono text-primary">demo@example.com</span>
-                          </p>
-                          <p>
-                            Password: <span className="font-mono text-primary">demo123</span>
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
               </form>
 
               <div className="mt-6 text-center text-sm text-muted-foreground">
-                New to Safety Hub?{" "}
-                <Link to="/register" className="font-medium text-primary hover:underline">
-                  Create an account
+                Already have an account?{" "}
+                <Link to="/login" className="font-medium text-primary hover:underline">
+                  Sign in
                 </Link>
               </div>
             </CardContent>
 
-            {/* Footer */}
             <div className="border-t border-border bg-muted/30 px-8 py-4 text-center">
               <p className="text-xs text-muted-foreground">
-                Need help?{" "}
+                Need assistance?{" "}
                 <a href="#" className="font-medium text-primary hover:underline">
                   Contact Support
                 </a>
@@ -283,7 +281,6 @@ export default function Login() {
           </Card>
         </motion.div>
 
-        {/* Trust Badge */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -299,3 +296,4 @@ export default function Login() {
     </div>
   );
 }
+

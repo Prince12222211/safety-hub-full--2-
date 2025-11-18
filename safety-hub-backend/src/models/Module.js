@@ -16,6 +16,7 @@ const moduleSchema = new mongoose.Schema({
   completedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   isActive: { type: Boolean, default: true },
   thumbnail: String,
+  youtubeLink: String, // YouTube channel or video link
   tags: [String],
   prerequisites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Module' }]
 }, { timestamps: true });

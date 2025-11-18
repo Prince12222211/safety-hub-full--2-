@@ -11,6 +11,7 @@ import { TranslatedText } from "@/components/TranslatedText";
 import { FileText, MapPin, AlertCircle, Send, Loader2, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 export default function ReportForm() {
   const [title, setTitle] = useState("");
@@ -71,6 +72,42 @@ export default function ReportForm() {
       }}
     >
       <div className="max-w-3xl mx-auto space-y-6">
+        <PageHeader
+          title={{
+            en: "Submit Incident Report",
+            hi: "घटना रिपोर्ट जमा करें",
+            pa: "ਘਟਨਾ ਰਿਪੋਰਟ ਜਮ੍ਹਾ ਕਰੋ",
+          }}
+          description={{
+            en: "Document safety incidents, hazards, or concerns so response teams can act fast.",
+            hi: "सुरक्षा घटनाओं, खतरों या चिंताओं को दस्तावेज़ित करें ताकि प्रतिक्रिया टीमें तेजी से कार्रवाई कर सकें।",
+            pa: "ਸੁਰੱਖਿਆ ਘਟਨਾਵਾਂ, ਖ਼ਤਰਿਆਂ ਜਾਂ ਚਿੰਤਾਵਾਂ ਦਾ ਦਸਤਾਵੇਜ਼ ਬਣਾਓ ਤਾਂ ਕਿ ਜਵਾਬੀ ਟੀਮਾਂ ਤੁਰੰਤ ਕਾਰਵਾਈ ਕਰ ਸਕਣ।",
+          }}
+          badge={{
+            en: "Trusted channel",
+            hi: "विश्वसनीय चैनल",
+            pa: "ਭਰੋਸੇਮੰਦ ਚੈਨਲ",
+          }}
+          icon={<FileText className="h-6 w-6" />}
+          highlights={[
+            {
+              label: { en: "Avg. review time", hi: "औसत समीक्षा समय", pa: "ਔਸਤ ਸਮੀਖਿਆ ਸਮਾਂ" },
+              value: "2h 15m",
+              helper: "Safety desk response",
+            },
+            {
+              label: { en: "Escalation rate", hi: "एस्केलेशन दर", pa: "ਏਸਕੇਲੇਸ਼ਨ ਦਰ" },
+              value: "8%",
+              helper: "Requiring on-site support",
+            },
+            {
+              label: { en: "Reports this month", hi: "इस महीने रिपोर्ट", pa: "ਇਸ ਮਹੀਨੇ ਦੀਆਂ ਰਿਪੋਰਟਾਂ" },
+              value: "34",
+              helper: "Campus-wide",
+            },
+          ]}
+        />
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
