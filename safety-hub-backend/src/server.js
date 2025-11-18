@@ -8,11 +8,22 @@ import alertRoutes from "./routes/alertRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 dotenv.config();
-connectDB();
 
 const app = express();
-app.use(cors());
+
+// CORS configuration
+app.use(cors({
+  origin: ["http://localhost:8080", "http://localhost:8081", "http://localhost:5173", "http://127.0.0.1:8080", "http://127.0.0.1:8081"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Connect to database
+connectDB();
 
 app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);

@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -16,6 +16,7 @@ import Users from "./pages/Users";
 import Progress from "./pages/Progress";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import IndexPage from "./pages/Index";
 
 const queryClient = new QueryClient();
 
@@ -26,7 +27,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<IndexPage />} />
           <Route path="/login" element={<Login />} />
           <Route
             path="/dashboard"
@@ -44,13 +45,62 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          <Route path="/alerts" element={<Alerts />} />
-          <Route path="/modules" element={<Modules />} />
-          <Route path="/facilities" element={<Facilities />} />
-          <Route path="/drills" element={<Drills />} />
-          <Route path="/assessments" element={<Assessments />} />
-          <Route path="/users" element={<Users />} />
-          <Route path="/progress" element={<Progress />} />
+          <Route
+            path="/alerts"
+            element={
+              <ProtectedRoute>
+                <Alerts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/modules"
+            element={
+              <ProtectedRoute>
+                <Modules />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/facilities"
+            element={
+              <ProtectedRoute>
+                <Facilities />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/drills"
+            element={
+              <ProtectedRoute>
+                <Drills />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/assessments"
+            element={
+              <ProtectedRoute>
+                <Assessments />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <Users />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/progress"
+            element={
+              <ProtectedRoute>
+                <Progress />
+              </ProtectedRoute>
+            }
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
