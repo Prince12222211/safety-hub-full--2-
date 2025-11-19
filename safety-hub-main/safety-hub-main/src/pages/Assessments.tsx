@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Plus, ClipboardList, Clock, CheckCircle2, Zap } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { getAssessments, createAssessment } from "../services/assessmentService";
+import { getAssessments, createAssessment, getAssessmentLeaderboard, getAssessmentAttempts, getUserAttemptsForAssessment } from "../services/assessmentService";
 import { getModules as fetchModules } from "../services/moduleService";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,12 @@ const Assessments = () => {
     questions: [{ question: "", type: "multiple-choice", options: ["", "", "", ""], correctAnswer: "", points: 1 }]
   });
   const [submitting, setSubmitting] = useState(false);
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [attemptsOpen, setAttemptsOpen] = useState(false);
+  const [selectedAssessment, setSelectedAssessment] = useState(null);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [attempts, setAttempts] = useState([]);
+  const [myAttempts, setMyAttempts] = useState([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -121,6 +127,32 @@ const Assessments = () => {
     });
   };
 
+  const openLeaderboard = async (assessment) => {
+    try {
+      setSelectedAssessment(assessment);
+      setLeaderboardOpen(true);
+      const data = await getAssessmentLeaderboard(assessment._id || assessment.id);
+      setLeaderboard(data || []);
+    } catch (err) {
+      console.error('Failed loading leaderboard', err);
+    }
+  };
+
+  const openAttempts = async (assessment) => {
+    try {
+      setSelectedAssessment(assessment);
+      setAttemptsOpen(true);
+      const [allAttempts, userAttempts] = await Promise.all([
+        getAssessmentAttempts(assessment._id || assessment.id),
+        getUserAttemptsForAssessment(assessment._id || assessment.id)
+      ]);
+      setAttempts(allAttempts.attempts || allAttempts || []);
+      setMyAttempts(userAttempts.attempts || userAttempts || []);
+    } catch (err) {
+      console.error('Failed loading attempts', err);
+    }
+  };
+
   const totalQuestions = assessments.reduce((sum, a) => sum + (a.questions?.length || 0), 0);
   const totalCompletions = assessments.reduce((sum, a) => sum + (a.attempts?.length || 0), 0);
   const avgPass = assessments.length > 0
@@ -188,7 +220,7 @@ const Assessments = () => {
             >
               ← Back to Assessments
             </Button>
-            <EarthquakeQuiz onComplete={handleEarthquakeQuizComplete} />
+            <EarthquakeQuiz onComplete={handleEarthquakeQuizComplete} assessmentId={selectedAssessment?._id} />
           </div>
         ) : (
           <>
@@ -227,7 +259,11 @@ const Assessments = () => {
                 </div>
                 <div className="flex gap-2 pt-2">
                   <Button 
-                    onClick={() => setShowEarthquakeQuiz(true)}
+                    onClick={() => {
+                      const eq = assessments.find(a => a.title === 'Earthquake Awareness Quiz');
+                      setSelectedAssessment(eq || null);
+                      setShowEarthquakeQuiz(true);
+                    }}
                     className="flex-1 bg-orange-600 hover:bg-orange-700 gap-2"
                   >
                     <Zap className="h-4 w-4" />
@@ -283,11 +319,11 @@ const Assessments = () => {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1">
-                          <TranslatedText en="Edit" hi="संपादित करें" pa="ਸੰਪਾਦਿਤ ਕਰੋ" />
+                        <Button variant="outline" size="sm" className="flex-1" onClick={() => openLeaderboard(assessment)}>
+                          <TranslatedText en="Leaderboard" hi="लीडरबोर्ड" pa="ਲੀਡਰਬੋਰਡ" />
                         </Button>
-                        <Button size="sm" className="flex-1">
-                          <TranslatedText en="Take Quiz" hi="क्विज़ लें" pa="ਕੁਇਜ਼ ਲਓ" />
+                        <Button size="sm" className="flex-1" onClick={() => openAttempts(assessment)}>
+                          <TranslatedText en="Attempts" hi="प्रयास" pa="ਕੋਸ਼ਿਸ਼ਾਂ" />
                         </Button>
                       </div>
                     </CardContent>
@@ -480,8 +516,92 @@ const Assessments = () => {
           </form>
         </DialogContent>
       </Dialog>
+        {/* Leaderboard Dialog */}
+        <Dialog open={leaderboardOpen} onOpenChange={setLeaderboardOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Leaderboard — {selectedAssessment?.title}</DialogTitle>
+              <DialogDescription>Top performers for this assessment</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 mt-4">
+              {leaderboard.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No attempts yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {leaderboard.map((row, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-white rounded shadow-sm">
+                      <div>
+                        <div className="font-medium">{row.user?.name || row.user?.email || 'User'}</div>
+                        <div className="text-xs text-muted-foreground">{row.user?.email}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold">{Math.round(row.bestScore)}%</div>
+                        <div className="text-xs text-muted-foreground">avg {Math.round(row.avgScore)}%</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Attempts Dialog */}
+        <Dialog open={attemptsOpen} onOpenChange={setAttemptsOpen}>
+          <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Attempts — {selectedAssessment?.title}</DialogTitle>
+              <DialogDescription>All attempts (top) and your attempts (below)</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <section>
+                <h4 className="font-semibold mb-2">Top Attempts</h4>
+                {attempts.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No attempts recorded yet.</p>
+                ) : (
+                  attempts.map((a, i) => (
+                    <div key={i} className="p-3 bg-white rounded border mb-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium">{a.user?.name || a.user?.email || 'Anonymous'}</div>
+                          <div className="text-xs text-muted-foreground">{new Date(a.completedAt).toLocaleString()}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold">{Math.round(a.score)}%</div>
+                          <div className="text-xs text-muted-foreground">{a.passed ? 'Passed' : 'Failed'}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </section>
+
+              <section>
+                <h4 className="font-semibold mb-2">Your Attempts</h4>
+                {myAttempts.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">You have not attempted this assessment yet.</p>
+                ) : (
+                  myAttempts.map((a, i) => (
+                    <div key={i} className="p-3 bg-white rounded border mb-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-xs text-muted-foreground">{new Date(a.completedAt).toLocaleString()}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold">{Math.round(a.score)}%</div>
+                          <div className="text-xs text-muted-foreground">{a.passed ? 'Passed' : 'Failed'}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </section>
+            </div>
+          </DialogContent>
+        </Dialog>
     </DashboardLayout>
   );
 };
 
+// Leaderboard Dialog
 export default Assessments;

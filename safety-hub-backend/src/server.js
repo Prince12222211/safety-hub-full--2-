@@ -12,7 +12,9 @@ import assessmentRoutes from "./routes/assessmentRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { ensureDemoUser } from "./utils/seedDemoUser.js";
+import ensureEarthquakeAssessment from "./utils/seedAssessments.js";
 import newsRoutes from "./routes/newsRoutes.js";
+import statsRoutes from "./routes/statsRoutes.js";
 
 dotenv.config();
 
@@ -29,8 +31,15 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Connect to database
-connectDB().then(ensureDemoUser);
+// Connect to database and seed demo data
+connectDB().then(async () => {
+  try {
+    await ensureDemoUser();
+    await ensureEarthquakeAssessment();
+  } catch (err) {
+    console.error('Seeding error:', err.message);
+  }
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
@@ -41,6 +50,7 @@ app.use("/api/modules", moduleRoutes);
 app.use("/api/assessments", assessmentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/news", newsRoutes);
+app.use("/api/stats", statsRoutes);
 
 app.get("/", (req, res) => res.send("Safety Hub API is running"));
 app.use(errorHandler);

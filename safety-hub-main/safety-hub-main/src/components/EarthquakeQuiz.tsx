@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -139,13 +139,16 @@ const earthquakeQuizzes: QuizQuestion[] = [
 
 interface QuizProps {
   onComplete?: (score: number, totalQuestions: number, answers: number[]) => void;
+  assessmentId?: string;
 }
 
-export const EarthquakeQuiz = ({ onComplete }: QuizProps) => {
+export const EarthquakeQuiz = ({ onComplete, assessmentId }: QuizProps) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [startedAt, setStartedAt] = useState<string | null>(null);
+  const [submittingAttempt, setSubmittingAttempt] = useState(false);
 
   const handleSelectAnswer = (index: number) => {
     setSelectedAnswer(index);
@@ -163,17 +166,43 @@ export const EarthquakeQuiz = ({ onComplete }: QuizProps) => {
       setSelectedAnswer(null);
     } else {
       setShowResults(true);
-      calculateScore(newAnswers);
+      const completedAt = new Date().toISOString();
+      calculateScore(newAnswers, completedAt);
     }
   };
 
-  const calculateScore = (finalAnswers: number[]) => {
+  const calculateScore = (finalAnswers: number[], completedAt?: string) => {
     const score = finalAnswers.filter((answer, index) => {
       return answer === earthquakeQuizzes[index].correctAnswer;
     }).length;
-    
+
     if (onComplete) {
       onComplete(score, earthquakeQuizzes.length, finalAnswers);
+    }
+
+    // If an assessmentId was provided, submit the attempt to backend
+    if (assessmentId) {
+      submitAttemptToApi(finalAnswers, completedAt || new Date().toISOString());
+    }
+  };
+
+  const submitAttemptToApi = async (finalAnswers: number[], completedAt: string) => {
+    try {
+      setSubmittingAttempt(true);
+      // Lazy import to avoid circular issues
+      const { submitAssessment } = await import("../services/assessmentService");
+
+      const payload = {
+        answers: finalAnswers.map((ansIdx, qi) => ({ questionIndex: qi, answer: earthquakeQuizzes[qi].options[ansIdx] })),
+        startedAt: startedAt || new Date().toISOString(),
+        completedAt
+      };
+
+      await submitAssessment(assessmentId as string, payload);
+    } catch (err) {
+      console.error("Failed to submit attempt:", err);
+    } finally {
+      setSubmittingAttempt(false);
     }
   };
 
@@ -183,6 +212,11 @@ export const EarthquakeQuiz = ({ onComplete }: QuizProps) => {
     setShowResults(false);
     setSelectedAnswer(null);
   };
+
+  useEffect(() => {
+    // mark start time when component mounts
+    setStartedAt(new Date().toISOString());
+  }, []);
 
   if (showResults) {
     const score = answers.filter((answer, index) => {

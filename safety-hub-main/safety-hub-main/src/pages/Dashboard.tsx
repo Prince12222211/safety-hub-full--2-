@@ -2,6 +2,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { StatCard } from "@/components/StatCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TranslatedText } from "@/components/TranslatedText";
+import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { BookOpen, Building2, Siren, Users, AlertTriangle, CheckCircle2, Clock, ArrowUpRight, Shield, Activity, TrendingUp, Zap, Target, Award, Calendar, MapPin, Flame, Droplets, AlertCircle as AlertCircleIcon, Globe2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getAlerts } from "../services/alertService";
@@ -9,6 +10,7 @@ import { getModules } from "../services/moduleService";
 import { getFacilities } from "../services/facilityService";
 import { getDrills } from "../services/drillService";
 import { getAssessments } from "../services/assessmentService";
+import { getReports } from "../services/reportService";
 import { getLatestNews, NewsArticle } from "../services/newsService";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
@@ -96,6 +98,12 @@ const Dashboard = () => {
     refetchInterval: 60000,
   });
 
+  const { data: reports = [], isLoading: reportsLoading } = useQuery({
+    queryKey: ["reports"],
+    queryFn: getReports,
+    refetchInterval: 60000,
+  });
+
   const {
     data: newsArticles = [],
     isLoading: newsLoading,
@@ -107,7 +115,7 @@ const Dashboard = () => {
     refetchInterval: 1000 * 60 * 5, // Refresh every 5 minutes
   });
 
-  const isLoading = alertsLoading || modulesLoading || facilitiesLoading || drillsLoading || assessmentsLoading;
+  const isLoading = alertsLoading || modulesLoading || facilitiesLoading || drillsLoading || assessmentsLoading || reportsLoading;
 
   // Calculate real stats from backend data
   const activeModules = modules.length;
@@ -376,10 +384,28 @@ const Dashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-3">
-                <ActivityItem text="New module added: Flood Safety Basics" time="2 hours ago" type="success" />
-                <ActivityItem text="Drill completed: Fire Evacuation (Building A)" time="5 hours ago" type="success" />
-                <ActivityItem text="Assessment pending: 15 users need to complete quiz" time="1 day ago" type="warning" />
-                <ActivityItem text="New facility registered: East Wing" time="2 days ago" type="success" />
+                {alerts.length === 0 && reports.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
+                ) : (
+                  <>
+                    {alerts.slice(0, 2).map((alert, idx) => (
+                      <ActivityItem 
+                        key={`alert-${idx}`}
+                        text={`Alert: ${alert.title || 'Safety Alert'} - ${alert.severity || 'Medium'} severity`}
+                        time={new Date(alert.createdAt).toLocaleString()}
+                        type={alert.severity === 'critical' ? 'warning' : 'success'}
+                      />
+                    ))}
+                    {reports.slice(0, 2).map((report, idx) => (
+                      <ActivityItem
+                        key={`report-${idx}`}
+                        text={`Report: ${report.title} - Priority: ${report.priority}`}
+                        time={new Date(report.createdAt).toLocaleString()}
+                        type={report.priority === 'critical' ? 'warning' : 'success'}
+                      />
+                    ))}
+                  </>
+                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -530,6 +556,25 @@ const Dashboard = () => {
               )}
             </CardContent>
           </Card>
+        </motion.div>
+
+        {/* Advanced Analytics Dashboard */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="rounded-[28px] border border-white/60 bg-gradient-to-br from-white/80 to-white/60 p-8 shadow-lg"
+        >
+          <div className="mb-6 space-y-2">
+            <h3 className="text-2xl font-bold flex items-center gap-3">
+              <div className="rounded-xl bg-primary/10 p-2">
+                <TrendingUp className="h-6 w-6 text-primary" />
+              </div>
+              Advanced Analytics
+            </h3>
+            <p className="text-muted-foreground">Comprehensive metrics and performance insights</p>
+          </div>
+          <AnalyticsDashboard />
         </motion.div>
       </div>
     </DashboardLayout>

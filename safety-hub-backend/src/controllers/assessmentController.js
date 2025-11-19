@@ -1,4 +1,5 @@
 import Assessment from "../models/Assessment.js";
+import mongoose from "mongoose";
 
 export const getAllAssessments = async (req, res) => {
   try {
@@ -98,6 +99,67 @@ export const getMyAttempts = async (req, res) => {
     });
 
     res.json(myAttempts);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getAssessmentLeaderboard = async (req, res) => {
+  try {
+    const assessmentId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(assessmentId)) {
+      return res.status(400).json({ message: "Invalid assessment id" });
+    }
+
+    const assessment = await Assessment.findById(assessmentId).populate('attempts.user', 'name email');
+    if (!assessment) return res.status(404).json({ message: "Assessment not found" });
+
+    // Group by user and return top attempts
+    const userScores = {};
+    (assessment.attempts || []).forEach(a => {
+      const uid = a.user?._id?.toString();
+      if (!uid) return;
+      if (!userScores[uid]) {
+        userScores[uid] = { user: a.user, bestScore: a.score, avgScore: a.score, count: 1 };
+      } else {
+        userScores[uid].bestScore = Math.max(userScores[uid].bestScore, a.score);
+        userScores[uid].avgScore = (userScores[uid].avgScore * userScores[uid].count + a.score) / (userScores[uid].count + 1);
+        userScores[uid].count++;
+      }
+    });
+
+    const leaderboard = Object.values(userScores)
+      .sort((a, b) => b.bestScore - a.bestScore || b.avgScore - a.avgScore)
+      .slice(0, 10)
+      .map(({ user, bestScore, avgScore }) => ({ user, bestScore, avgScore }));
+
+    res.json(leaderboard);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getAssessmentAttemptsById = async (req, res) => {
+  try {
+    const assessment = await Assessment.findById(req.params.id).populate('attempts.user', 'name email');
+    if (!assessment) return res.status(404).json({ message: "Assessment not found" });
+
+    // Sort attempts by score descending
+    const attempts = (assessment.attempts || []).slice().sort((a, b) => b.score - a.score);
+    res.json({ assessment: { _id: assessment._id, title: assessment.title }, attempts });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getUserAssessmentAttempts = async (req, res) => {
+  try {
+    const assessmentId = req.params.id;
+    const assessment = await Assessment.findById(assessmentId).populate('module', 'title');
+    if (!assessment) return res.status(404).json({ message: "Assessment not found" });
+
+    const userAttempts = (assessment.attempts || []).filter(a => a.user.toString() === req.user.id);
+    res.json({ assessment: { _id: assessment._id, title: assessment.title, module: assessment.module }, attempts: userAttempts });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

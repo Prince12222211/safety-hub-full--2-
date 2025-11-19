@@ -15,3 +15,12 @@ export const createAssessment = (data) =>
 export const submitAssessment = (id, data) =>
   api.post(`/assessments/${id}/submit`, data).then(res => res.data);
 
+export const getAssessmentLeaderboard = (id) =>
+  api.get(`/assessments/${id}/leaderboard`).then(res => res.data);
+
+export const getAssessmentAttempts = (id) =>
+  api.get(`/assessments/${id}/attempts`).then(res => res.data);
+
+export const getUserAttemptsForAssessment = (id) =>
+  api.get(`/assessments/${id}/my`).then(res => res.data);
+
