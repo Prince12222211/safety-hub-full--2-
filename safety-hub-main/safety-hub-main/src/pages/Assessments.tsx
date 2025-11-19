@@ -3,7 +3,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TranslatedText } from "@/components/TranslatedText";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, ClipboardList, Clock, CheckCircle2 } from "lucide-react";
+import { Plus, ClipboardList, Clock, CheckCircle2, Zap } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getAssessments, createAssessment } from "../services/assessmentService";
 import { getModules as fetchModules } from "../services/moduleService";
@@ -15,12 +15,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { EarthquakeQuiz } from "@/components/EarthquakeQuiz";
 
 const Assessments = () => {
   const [assessments, setAssessments] = useState([]);
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [showEarthquakeQuiz, setShowEarthquakeQuiz] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -111,6 +113,14 @@ const Assessments = () => {
     }
   };
 
+  const handleEarthquakeQuizComplete = (score: number, total: number, answers: number[]) => {
+    const percentage = Math.round((score / total) * 100);
+    toast({
+      title: "Quiz Completed!",
+      description: `You scored ${score}/${total} (${percentage}%). ${percentage >= 70 ? 'Great job!' : 'Keep practicing!'}`
+    });
+  };
+
   const totalQuestions = assessments.reduce((sum, a) => sum + (a.questions?.length || 0), 0);
   const totalCompletions = assessments.reduce((sum, a) => sum + (a.attempts?.length || 0), 0);
   const avgPass = assessments.length > 0
@@ -152,8 +162,8 @@ const Assessments = () => {
           highlights={[
             {
               label: { en: "Active quizzes", hi: "सक्रिय क्विज़", pa: "ਸਕਰੀਆ ਕੁਇਜ਼" },
-              value: assessments.length.toString(),
-              helper: `${totalQuestions} questions total`,
+              value: (assessments.length + 1).toString(),
+              helper: `${totalQuestions + 10} questions total`,
             },
             {
               label: { en: "Avg. passing score", hi: "औसत उत्तीर्ण स्कोर", pa: "ਔਸਤ ਪਾਸਿੰਗ ਸਕੋਰ" },
@@ -168,63 +178,124 @@ const Assessments = () => {
           ]}
         />
 
-        {loading ? (
-          <LoadingSpinner text="Loading assessments..." />
-        ) : assessments.length === 0 ? (
-          <Card className="glass-panel border-white/60">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <ClipboardList className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Assessments Available</h3>
-              <p className="text-sm text-muted-foreground">Create your first assessment to get started</p>
-            </CardContent>
-          </Card>
+        {/* Earthquake Awareness Quiz Section */}
+        {showEarthquakeQuiz ? (
+          <div className="space-y-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowEarthquakeQuiz(false)}
+              className="mb-4"
+            >
+              ← Back to Assessments
+            </Button>
+            <EarthquakeQuiz onComplete={handleEarthquakeQuizComplete} />
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {assessments.map((assessment) => (
-              <Card key={assessment._id || assessment.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <ClipboardList className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{assessment.title}</CardTitle>
-                      <CardDescription className="mt-1">{assessment.description}</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <ClipboardList className="h-4 w-4" />
-                      <span>{assessment.questions?.length || 0} questions</span>
-                    </div>
-                    {assessment.timeLimit && (
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        <span>{assessment.timeLimit} min</span>
+          <>
+            {/* Featured Earthquake Quiz Card */}
+            <Card className="border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-red-50 overflow-hidden">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-2 bg-orange-600 rounded-lg">
+                        <Zap className="h-5 w-5 text-white" />
                       </div>
-                    )}
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>{assessment.passingScore || 70}% pass</span>
+                      <span className="px-2 py-1 bg-orange-200 text-orange-800 text-xs font-semibold rounded-full">FEATURED</span>
                     </div>
-                    <div className="text-muted-foreground">
-                      {assessment.attempts?.length || 0} taken
-                    </div>
+                    <CardTitle className="text-2xl">Earthquake Awareness Quiz</CardTitle>
+                    <CardDescription className="mt-2 text-gray-700">
+                      Test your knowledge about earthquake safety, preparedness, and response procedures. Learn essential skills to protect yourself and others.
+                    </CardDescription>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1">
-                      <TranslatedText en="Edit" hi="संपादित करें" pa="ਸੰਪਾਦਿਤ ਕਰੋ" />
-                    </Button>
-                    <Button size="sm" className="flex-1">
-                      <TranslatedText en="Take Quiz" hi="क्विज़ लें" pa="ਕੁਇਜ਼ ਲਓ" />
-                    </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-white rounded-lg p-4 border border-orange-100">
+                    <div className="text-2xl font-bold text-orange-600">10</div>
+                    <div className="text-sm text-gray-600">Questions</div>
                   </div>
+                  <div className="bg-white rounded-lg p-4 border border-orange-100">
+                    <div className="text-2xl font-bold text-orange-600">70%</div>
+                    <div className="text-sm text-gray-600">Pass Required</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 border border-orange-100">
+                    <div className="text-2xl font-bold text-orange-600">~5 min</div>
+                    <div className="text-sm text-gray-600">Time to Complete</div>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    onClick={() => setShowEarthquakeQuiz(true)}
+                    className="flex-1 bg-orange-600 hover:bg-orange-700 gap-2"
+                  >
+                    <Zap className="h-4 w-4" />
+                    Start Quiz
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {loading ? (
+              <LoadingSpinner text="Loading assessments..." />
+            ) : assessments.length === 0 ? (
+              <Card className="glass-panel border-white/60">
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <ClipboardList className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Assessments Available</h3>
+                  <p className="text-sm text-muted-foreground">Create your first assessment to get started</p>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {assessments.map((assessment) => (
+                  <Card key={assessment._id || assessment.id} className="hover:shadow-md transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <ClipboardList className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <CardTitle className="text-lg">{assessment.title}</CardTitle>
+                          <CardDescription className="mt-1">{assessment.description}</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <ClipboardList className="h-4 w-4" />
+                          <span>{assessment.questions?.length || 0} questions</span>
+                        </div>
+                        {assessment.timeLimit && (
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            <span>{assessment.timeLimit} min</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span>{assessment.passingScore || 70}% pass</span>
+                        </div>
+                        <div className="text-muted-foreground">
+                          {assessment.attempts?.length || 0} taken
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="flex-1">
+                          <TranslatedText en="Edit" hi="संपादित करें" pa="ਸੰਪਾਦਿਤ ਕਰੋ" />
+                        </Button>
+                        <Button size="sm" className="flex-1">
+                          <TranslatedText en="Take Quiz" hi="क्विज़ लें" pa="ਕੁਇਜ਼ ਲਓ" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 

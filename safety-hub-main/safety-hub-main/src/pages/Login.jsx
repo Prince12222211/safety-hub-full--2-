@@ -2,12 +2,27 @@ import { useState, useContext } from "react";
 import { loginUser } from "../services/authService";
 import { AuthContext } from "../contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
-import { AlertCircle, Loader2, Eye, EyeOff, Shield, Sparkles, Lock, ArrowRight } from "lucide-react";
+import {
+  AlertCircle,
+  Loader2,
+  Eye,
+  EyeOff,
+  Shield,
+  Sparkles,
+  Lock,
+  ArrowRight,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function Login() {
@@ -60,23 +75,23 @@ export default function Login() {
   };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-background flex items-center justify-center p-4">
+    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 flex items-center justify-center p-4">
       {/* Animated Background Elements */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="grid-mask absolute inset-0 opacity-40" />
+        <div className="grid-mask absolute inset-0 opacity-30" />
         <motion.div
           aria-hidden="true"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.2, ease: "easeOut" }}
-          className="absolute -top-32 right-0 h-96 w-96 rounded-full bg-primary/25 blur-[140px]"
+          className="absolute -top-32 right-0 h-96 w-96 rounded-full bg-gradient-to-b from-purple-400/40 to-pink-300/30 blur-[140px]"
         />
         <motion.div
           aria-hidden="true"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }}
-          className="absolute bottom-0 left-12 h-[460px] w-[460px] rounded-full bg-accent/25 blur-[200px]"
+          className="absolute bottom-0 left-12 h-[460px] w-[460px] rounded-full bg-gradient-to-t from-cyan-400/30 to-emerald-300/25 blur-[200px]"
         />
       </div>
 
@@ -88,7 +103,7 @@ export default function Login() {
         >
           <Card className="glass-panel border-white/60 shadow-[0_30px_80px_rgba(15,23,42,0.12)] overflow-hidden">
             {/* Header Section */}
-            <div className="relative bg-gradient-to-br from-primary via-primary/90 to-primary/80 px-8 py-12 text-white overflow-hidden">
+            <div className="relative bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 px-8 py-12 text-white overflow-hidden">
               <div className="absolute inset-0 bg-grid-white/10 opacity-20" />
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
@@ -100,7 +115,9 @@ export default function Login() {
                   <Shield className="h-8 w-8" />
                 </div>
                 <div className="text-center">
-                  <h1 className="font-display text-3xl font-bold">Safety Hub</h1>
+                  <h1 className="font-display text-3xl font-bold">
+                    Safety Hub
+                  </h1>
                   <p className="mt-2 text-sm text-white/90 flex items-center justify-center gap-2">
                     <Sparkles className="h-3.5 w-3.5" />
                     Disaster Management & Safety Training
@@ -149,7 +166,11 @@ export default function Login() {
                       setEmail(e.target.value);
                       if (errors.email) setErrors({ ...errors, email: "" });
                     }}
-                    className={errors.email ? "border-destructive focus-visible:ring-destructive" : ""}
+                    className={
+                      errors.email
+                        ? "border-destructive focus-visible:ring-destructive"
+                        : ""
+                    }
                   />
                   {errors.email && (
                     <p className="text-sm text-destructive flex items-center gap-1.5">
@@ -172,9 +193,14 @@ export default function Login() {
                       value={password}
                       onChange={(e) => {
                         setPassword(e.target.value);
-                        if (errors.password) setErrors({ ...errors, password: "" });
+                        if (errors.password)
+                          setErrors({ ...errors, password: "" });
                       }}
-                      className={errors.password ? "border-destructive focus-visible:ring-destructive pr-10" : "pr-10"}
+                      className={
+                        errors.password
+                          ? "border-destructive focus-visible:ring-destructive pr-10"
+                          : "pr-10"
+                      }
                     />
                     <button
                       type="button"
@@ -203,7 +229,10 @@ export default function Login() {
                     type="checkbox"
                     className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
                   />
-                  <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
+                  <Label
+                    htmlFor="remember"
+                    className="text-sm font-normal cursor-pointer"
+                  >
                     Remember me
                   </Label>
                 </div>
@@ -234,7 +263,9 @@ export default function Login() {
                     <div className="w-full border-t border-border" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground">or continue as</span>
+                    <span className="bg-card px-2 text-muted-foreground">
+                      or continue as
+                    </span>
                   </div>
                 </div>
 
@@ -251,10 +282,16 @@ export default function Login() {
                         </p>
                         <div className="space-y-1 text-xs text-muted-foreground">
                           <p>
-                            Email: <span className="font-mono text-primary">demo@example.com</span>
+                            Email:{" "}
+                            <span className="font-mono text-primary">
+                              demo@example.com
+                            </span>
                           </p>
                           <p>
-                            Password: <span className="font-mono text-primary">demo123</span>
+                            Password:{" "}
+                            <span className="font-mono text-primary">
+                              demo123
+                            </span>
                           </p>
                         </div>
                       </div>
@@ -265,7 +302,10 @@ export default function Login() {
 
               <div className="mt-6 text-center text-sm text-muted-foreground">
                 New to Safety Hub?{" "}
-                <Link to="/register" className="font-medium text-primary hover:underline">
+                <Link
+                  to="/register"
+                  className="font-medium text-primary hover:underline"
+                >
                   Create an account
                 </Link>
               </div>
@@ -275,7 +315,10 @@ export default function Login() {
             <div className="border-t border-border bg-muted/30 px-8 py-4 text-center">
               <p className="text-xs text-muted-foreground">
                 Need help?{" "}
-                <a href="#" className="font-medium text-primary hover:underline">
+                <a
+                  href="#"
+                  className="font-medium text-primary hover:underline"
+                >
                   Contact Support
                 </a>
               </p>
