@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
+
 import authRoutes from "./routes/authRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import alertRoutes from "./routes/alertRoutes.js";
@@ -10,36 +11,63 @@ import drillRoutes from "./routes/drillRoutes.js";
 import moduleRoutes from "./routes/moduleRoutes.js";
 import assessmentRoutes from "./routes/assessmentRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import newsRoutes from "./routes/newsRoutes.js";
+import statsRoutes from "./routes/statsRoutes.js";
+
 import { errorHandler } from "./middleware/errorHandler.js";
 import { ensureDemoUser } from "./utils/seedDemoUser.js";
 import ensureEarthquakeAssessment from "./utils/seedAssessments.js";
-import newsRoutes from "./routes/newsRoutes.js";
-import statsRoutes from "./routes/statsRoutes.js";
 
 dotenv.config();
 
 const app = express();
 
-// CORS configuration
-app.use(cors({
-  origin: ["http://localhost:8080", "http://localhost:8081", "http://localhost:5173", "http://127.0.0.1:8080", "http://127.0.0.1:8081"],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+// ------------------------------------------------------
+// 🔥 CORS FIX FOR DEPLOYMENT (Render)
+// ------------------------------------------------------
+
+const FRONTEND_URL = "https://safety-hub-full-2-2123.onrender.com";
+
+app.use(
+  cors({
+    origin: [
+      FRONTEND_URL,          // 🔥 Your deployed frontend URL
+      "http://localhost:5173",
+      "http://localhost:8080",
+      "http://localhost:8081",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:8080",
+      "http://127.0.0.1:8081",
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// ------------------------------------------------------
+// Middleware
+// ------------------------------------------------------
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Connect to database and seed demo data
+// ------------------------------------------------------
+// Database + Seeding Demo Data
+// ------------------------------------------------------
+
 connectDB().then(async () => {
   try {
     await ensureDemoUser();
     await ensureEarthquakeAssessment();
   } catch (err) {
-    console.error('Seeding error:', err.message);
+    console.error("Seeding error:", err.message);
   }
 });
+
+// ------------------------------------------------------
+// API Routes
+// ------------------------------------------------------
 
 app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
@@ -52,8 +80,17 @@ app.use("/api/users", userRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/stats", statsRoutes);
 
+// Default Route
 app.get("/", (req, res) => res.send("Safety Hub API is running"));
+
+// Error Handler
 app.use(errorHandler);
 
+// ------------------------------------------------------
+// Server Start
+// ------------------------------------------------------
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () =>
+  console.log(`🚀 Server running on port ${PORT}`)
+);
