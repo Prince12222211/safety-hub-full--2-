@@ -15,7 +15,7 @@ const getStoredUser = () => {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(getStoredUser);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // 👈 Important: do NOT block UI on load
 
   const persistUser = (profile) => {
     if (profile) {
@@ -36,15 +36,21 @@ export function AuthProvider({ children }) {
     }
 
     setLoading(true);
+
     try {
       const data = await getProfile();
       setUser(data);
       persistUser(data);
     } catch (err) {
-      console.warn("Not logged in", err?.message);
-      localStorage.removeItem("token");
-      setUser(null);
-      persistUser(null);
+      console.warn("Backend not reachable or not logged in:", err?.message);
+
+      // ❗ FIX: Do NOT clear user/token if backend is offline
+      // Only clear if backend returns 401
+      if (err?.response?.status === 401) {
+        localStorage.removeItem("token");
+        persistUser(null);
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -69,7 +75,9 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshProfile: loadProfile }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, logout, refreshProfile: loadProfile }}
+    >
       {children}
     </AuthContext.Provider>
   );
