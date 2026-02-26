@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createReport } from "../services/reportService";
+import { suggestIncidentFields } from "../services/aiService";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ export default function ReportForm() {
   const [type, setType] = useState("");
   const [priority, setPriority] = useState("");
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const { toast } = useToast();
 
@@ -60,6 +62,45 @@ export default function ReportForm() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAiSuggest = async () => {
+    if (!description || description.trim().length < 10) {
+      toast({
+        title: "Need more details",
+        description: "Please enter a more detailed description before using AI suggestions.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const result = await suggestIncidentFields(description);
+      if (result.title) setTitle(result.title);
+      if (result.type) setType(result.type);
+      if (result.priority) setPriority(result.priority);
+
+      if (result.suggestions?.length) {
+        toast({
+          title: "AI Safety Suggestions",
+          description: result.suggestions.join(" • "),
+        });
+      } else {
+        toast({
+          title: "AI updated the form",
+          description: "Title, type, and priority were suggested from your description.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "AI unavailable",
+        description: error.response?.data?.msg || "Could not fetch AI suggestions. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -284,13 +325,35 @@ export default function ReportForm() {
                       rows={6}
                       required
                     />
-                    <p className="text-xs text-muted-foreground">
-                      <TranslatedText
-                        en="Please include as much detail as possible to help our team respond effectively."
-                        hi="कृपया हमारी टीम को प्रभावी ढंग से प्रतिक्रिया देने में मदद करने के लिए यथासंभव विवरण शामिल करें।"
-                        pa="ਕਿਰਪਾ ਕਰਕੇ ਸਾਡੀ ਟੀਮ ਨੂੰ ਪ੍ਰਭਾਵਸ਼ੀਲ ਢੰਗ ਨਾਲ ਜਵਾਬ ਦੇਣ ਵਿੱਚ ਮਦਦ ਕਰਨ ਲਈ ਜਿੰਨਾ ਸੰਭਵ ਹੋ ਸਕੇ ਵੇਰਵੇ ਸ਼ਾਮਲ ਕਰੋ।"
-                      />
-                    </p>
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <p className="text-xs text-muted-foreground">
+                        <TranslatedText
+                          en="Include as much detail as possible to help our team respond effectively."
+                          hi="कृपया हमारी टीम को प्रभावी ढंग से प्रतिक्रिया देने में मदद करने के लिए यथासंभव विवरण शामिल करें।"
+                          pa="ਕਿਰਪਾ ਕਰਕੇ ਸਾਡੀ ਟੀਮ ਨੂੰ ਪ੍ਰਭਾਵਸ਼ੀਲ ਢੰਗ ਨਾਲ ਜਵਾਬ ਦੇਣ ਵਿੱਚ ਮਦਦ ਕਰਨ ਲਈ ਜਿੰਨਾ ਸੰਭਵ ਹੋ ਸਕੇ ਵੇਰਵੇ ਸ਼ਾਮਲ ਕਰੋ।"
+                        />
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-1 rounded-2xl"
+                        onClick={handleAiSuggest}
+                        disabled={aiLoading || !description}
+                      >
+                        {aiLoading ? (
+                          <>
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            AI thinking...
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle className="h-3 w-3" />
+                            AI suggest
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Submit Button */}

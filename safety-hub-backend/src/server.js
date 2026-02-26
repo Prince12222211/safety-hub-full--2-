@@ -13,6 +13,7 @@ import assessmentRoutes from "./routes/assessmentRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import newsRoutes from "./routes/newsRoutes.js";
 import statsRoutes from "./routes/statsRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 
 import { errorHandler } from "./middleware/errorHandler.js";
 import { ensureDemoUser } from "./utils/seedDemoUser.js";
@@ -79,6 +80,7 @@ app.use("/api/assessments", assessmentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/stats", statsRoutes);
+app.use("/api/ai", aiRoutes);
 
 // Default Route
 app.get("/", (req, res) => res.send("Safety Hub API is running"));
