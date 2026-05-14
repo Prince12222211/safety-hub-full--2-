@@ -14,7 +14,7 @@ export const createReport = async (req, res) => {
       description,
       type: type || "incident",
       priority: priority || "medium",
-      user: req.user
+      user: req.user?.id || req.user
     });
     
     res.status(201).json(report);

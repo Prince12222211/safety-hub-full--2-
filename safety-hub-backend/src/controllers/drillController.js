@@ -27,7 +27,11 @@ export const getDrillById = async (req, res) => {
 
 export const createDrill = async (req, res) => {
   try {
-    const drill = await Drill.create(req.body);
+    const data = {
+      ...req.body,
+      coordinator: req.body.coordinator || req.user?.id
+    };
+    const drill = await Drill.create(data);
     res.status(201).json(drill);
   } catch (error) {
     res.status(400).json({ message: error.message });

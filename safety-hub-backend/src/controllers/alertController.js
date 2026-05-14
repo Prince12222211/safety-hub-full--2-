@@ -13,7 +13,7 @@ export const createAlert = async (req, res) => {
       message,
       type: type || "info",
       location,
-      createdBy: req.user
+      createdBy: req.user?.id || req.user
     });
     
     res.status(201).json(alert);

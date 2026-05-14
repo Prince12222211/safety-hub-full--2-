@@ -83,7 +83,8 @@ export const login = async (req, res) => {
 
 export const getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user).select("-password");
+    const userId = req.user?.id || req.user;
+    const user = await User.findById(userId).select("-password");
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
     }

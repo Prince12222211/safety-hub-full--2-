@@ -15,7 +15,16 @@ export const protect = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded.id;
+
+    if (typeof decoded === "string") {
+      req.user = { id: decoded };
+    } else if (decoded && typeof decoded === "object") {
+      // ensure we have an `id` field on req.user
+      req.user = { ...decoded, id: decoded.id || decoded._id };
+    } else {
+      req.user = {};
+    }
+
     next();
   } catch (error) {
     if (error.name === "JsonWebTokenError") {
